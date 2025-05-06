@@ -12,13 +12,6 @@ import appointments_icon from './appointments_icon.svg'
 import earning_icon from './earning_icon.svg'
 import patients_icon from './patients_icon.svg'
 
-import doc1 from './doc1.jpeg'
-import doc2 from './doc2.jpeg'
-import doc3 from './doc3.jpeg'
-import doc4 from './doc4.jpeg'
-import doc5 from './doc5.jpeg'
-import doc6 from './doc6.jpeg'
-
 export const assets = {
   add_icon,
   admin_logo,
