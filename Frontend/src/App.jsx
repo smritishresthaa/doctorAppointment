@@ -31,7 +31,7 @@ const App = () => {
         <Route path='/about' element={<About />} />
         <Route path='/contact' element={<Contact />} />
         <Route path='/my-profile' element={<ProtectedRoute><MyProfile /></ProtectedRoute>} />
-        <Route path='/my-appointment' element={<ProtectedRoute><MyAppointments /></ProtectedRoute>} />
+        <Route path='/my-appointments' element={<ProtectedRoute><MyAppointments /></ProtectedRoute>} />
         <Route path='/appointment/:docId' element={<ProtectedRoute><Appointment /></ProtectedRoute>} />
         {/* ✅ Added /profile route */}
         <Route path='/profile' element={<ProtectedRoute><MyProfile /></ProtectedRoute>} />
