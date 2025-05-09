@@ -2,11 +2,23 @@ import React, { useContext, useEffect } from 'react'
 import { AdminContext } from '../../context/AdminContext'
 
 const DoctorsList = () => {
+<<<<<<< HEAD
   const { doctorList, getAllDoctors } = useContext(AdminContext)
 
   useEffect(() => {
     getAllDoctors()
   }, []) // Dependency array prevents infinite loop
+=======
+
+
+  const { doctors, changeAvailability , aToken , getAllDoctors} = useContext(AdminContext)
+
+  useEffect(() => {
+    if (aToken) {
+        getAllDoctors()
+    }
+}, [aToken])
+>>>>>>> 918fdd726654860975dafa66fc7e9f92be9a6a3a
 
   return (
     <div className='m-5 max-h-[90vh] overflow-y-scroll'>

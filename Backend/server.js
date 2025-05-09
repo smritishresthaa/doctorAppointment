@@ -1,25 +1,29 @@
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
+import express from "express"
+import cors from 'cors'
+import 'dotenv/config'
+import connectDB from "./config/mongodb.js"
+import connectCloudinary from "./config/cloudinary.js"
+import userRouter from "./routes/userRoute.js"
+import doctorRouter from "./routes/doctorRoute.js"
+import adminRouter from "./routes/adminRoute.js"
 
-const appointmentRoutes = require('./appointmentRoutes');
-const authRoutes = require('./authRoutes');
-//const doctorRoutes = require('./doctorRoutes');
-const adminRoutes = require('./adminRoutes'); // ✅ Added admin routes
+// app config
+const app = express()
+const port = process.env.PORT || 4000
+connectDB()
+connectCloudinary()
 
-const app = express();
-app.use(cors());
+// middlewares
+app.use(express.json())
+app.use(cors())
 
-app.use(bodyParser.json({ limit: '10mb' }));
-app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
+// api endpoints
+app.use("/api/user", userRouter)
+app.use("/api/admin", adminRouter)
+app.use("/api/doctor", doctorRouter)
 
-// ✅ Define API routes
-app.use('/api/appointments', appointmentRoutes);
-app.use('/api/auth', authRoutes);
-//app.use('/api/doctors', doctorRoutes);
-app.use('/api/admin', adminRoutes); // ✅ Register admin routes
-
-const PORT = 3001;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
+app.get("/", (req, res) => {
+  res.send("API Working")
 });
+
+app.listen(port, () => console.log(`Server started on PORT:${port}`))
