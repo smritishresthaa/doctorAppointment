@@ -1,348 +1,286 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { AppContext } from '../context/AppContext';
-import { useNavigate } from 'react-router-dom';
-import { Calendar, Clock } from 'lucide-react';
+"use client"
 
-// Import Dialog components
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "../components/ui/dialog"; // Adjust the import path as needed
-
-import { Button } from "../components/ui/button"; // Adjust the import path as needed
-import { Calendar as CalendarComponent } from "../components/ui/calendar"; // Adjust the import path as needed
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"; // Adjust the import path as needed
+import { useContext, useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { AppContext } from "../context/AppContext"
+import axios from "axios"
+import { toast } from "react-toastify"
 
 const MyAppointments = () => {
-  const { doctors } = useContext(AppContext);
-  const [appointments, setAppointments] = useState([]);
-  const [activeTab, setActiveTab] = useState('MyAppointments');
-  const [isLoading, setIsLoading] = useState(true);
-  const navigate = useNavigate();
+  const { backendUrl, token } = useContext(AppContext)
+  const navigate = useNavigate()
 
-  // State for reschedule dialog
-  const [rescheduleDialogOpen, setRescheduleDialogOpen] = useState(false);
-  const [selectedAppointment, setSelectedAppointment] = useState(null);
-  const [newDate, setNewDate] = useState(null);
-  const [newTime, setNewTime] = useState("");
-  const [isRescheduling, setIsRescheduling] = useState(false);
+  const [appointments, setAppointments] = useState([])
+  const [rescheduleId, setRescheduleId] = useState(null)
+  const [newDate, setNewDate] = useState("")
+  const [newTime, setNewTime] = useState("")
+  const [activeTab, setActiveTab] = useState("upcoming") // Default tab is upcoming
 
-  // Available time slots
-  const timeSlots = [
-    "09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM",
-    "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"
-  ];
+  const availableTimeSlots = [
+    "09:00 AM",
+    "10:00 AM",
+    "11:00 AM",
+    "12:00 PM",
+    "01:00 PM",
+    "02:00 PM",
+    "03:00 PM",
+    "04:00 PM",
+    "05:00 PM",
+  ]
+
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+  // Function to format the date eg. ( 20_01_2000 => 20 Jan 2000 )
+  const slotDateFormat = (slotDate) => {
+    const dateArray = slotDate.split("_")
+    return dateArray[0] + " " + months[Number(dateArray[1]) - 1] + " " + dateArray[2]
+  }
+
+  // Getting User Appointments Data Using API
+  const getUserAppointments = async () => {
+    try {
+      const { data } = await axios.get(backendUrl + "/api/user/appointments", { headers: { token } })
+      setAppointments(data.appointments.reverse())
+    } catch (error) {
+      console.log(error)
+      toast.error(error.message)
+    }
+  }
+
+  // Function to cancel appointment Using API
+  const cancelAppointment = async (appointmentId) => {
+    try {
+      const { data } = await axios.post(
+        backendUrl + "/api/user/cancel-appointment",
+        { appointmentId },
+        { headers: { token } },
+      )
+
+      if (data.success) {
+        toast.success(data.message)
+        getUserAppointments()
+      } else {
+        toast.error(data.message)
+      }
+    } catch (error) {
+      console.log(error)
+      toast.error(error.message)
+    }
+  }
+
+  // Function to toggle reschedule form
+  const toggleReschedule = (appointmentId) => {
+    if (rescheduleId === appointmentId) {
+      setRescheduleId(null)
+      setNewDate("")
+      setNewTime("")
+    } else {
+      setRescheduleId(appointmentId)
+      setNewDate("")
+      setNewTime("")
+    }
+  }
+
+  // Function to handle appointment rescheduling
+  const rescheduleAppointment = async (appointmentId) => {
+    if (!newDate || !newTime) {
+      toast.error("Please select both date and time")
+      return
+    }
+
+    try {
+      // Format date from YYYY-MM-DD to DD_MM_YYYY
+      const [year, month, day] = newDate.split("-")
+      const formattedDate = `${day}_${month}_${year}`
+
+      const { data } = await axios.post(
+        backendUrl + "/api/user/reschedule-appointment",
+        {
+          appointmentId,
+          newDate: formattedDate,
+          newTime,
+        },
+        { headers: { token } },
+      )
+
+      if (data.success) {
+        toast.success(data.message || "Appointment rescheduled successfully")
+        setRescheduleId(null)
+        setNewDate("")
+        setNewTime("")
+        getUserAppointments()
+      } else {
+        toast.error(data.message || "Failed to reschedule appointment")
+      }
+    } catch (error) {
+      console.log(error)
+      toast.error(error.message || "An error occurred while rescheduling")
+    }
+  }
+
+  // Filter appointments based on active tab
+  const getFilteredAppointments = () => {
+    const currentDate = new Date()
+
+    // Helper function to convert slot date to Date object
+    const getAppointmentDate = (appointment) => {
+      const [day, month, year] = appointment.slotDate.split("_")
+      return new Date(`${year}-${month}-${day}`)
+    }
+
+    switch (activeTab) {
+      case "upcoming":
+        return appointments.filter((appointment) => {
+          const appointmentDate = getAppointmentDate(appointment)
+          return !appointment.cancelled && !appointment.isCompleted && appointmentDate >= currentDate
+        })
+      case "past":
+        return appointments.filter((appointment) => {
+          const appointmentDate = getAppointmentDate(appointment)
+          return !appointment.cancelled && (appointment.isCompleted || appointmentDate < currentDate)
+        })
+      case "cancelled":
+        return appointments.filter((appointment) => appointment.cancelled)
+      default:
+        return appointments
+    }
+  }
 
   useEffect(() => {
-    fetchAppointments();
-  }, []);
-
-  const fetchAppointments = async () => {
-    setIsLoading(true);
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setIsLoading(false);
-      return;
+    if (token) {
+      getUserAppointments()
     }
-
-    try {
-      const res = await fetch("http://localhost:3001/api/appointments/user", {
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        console.log("Fetched appointments:", data.appointments);
-        setAppointments(data.appointments);
-      } else {
-        console.error("Failed to fetch appointments:", data.message);
-      }
-    } catch (err) {
-      console.error("Error fetching appointments:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleCancel = async (appointmentId) => {
-    const confirmCancel = window.confirm("Are you sure you want to cancel this appointment?");
-    if (!confirmCancel) return;
-
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`http://localhost:3001/api/appointments/${appointmentId}`, {
-        method: "DELETE",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        // Update the local state to remove the cancelled appointment
-        setAppointments(prev => prev.filter(app =>
-          app.id !== appointmentId && app._id !== appointmentId
-        ));
-        alert("Appointment cancelled successfully.");
-      } else {
-        alert(`Failed to cancel appointment: ${data.message || "Unknown error"}`);
-      }
-    } catch (err) {
-      console.error("Error cancelling appointment:", err);
-      alert("Error cancelling appointment. Please try again.");
-    }
-  };
-
-  const openRescheduleDialog = (appointment) => {
-    setSelectedAppointment(appointment);
-
-    // Set initial values based on current appointment
-    const currentDate = new Date(appointment.appointment_date);
-    setNewDate(currentDate);
-    setNewTime(appointment.appointment_time);
-
-    setRescheduleDialogOpen(true);
-  };
-
-  const handleReschedule = async () => {
-    if (!newDate || !newTime) {
-      alert("Please select both date and time");
-      return;
-    }
-
-    setIsRescheduling(true);
-
-    try {
-      const token = localStorage.getItem("token");
-
-      // Format the date for the API
-      const formattedDate = newDate.toISOString();
-
-      const res = await fetch(`http://localhost:3001/api/appointments/${selectedAppointment.id || selectedAppointment._id}`, {
-        method: "PUT",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          appointment_date: formattedDate,
-          appointment_time: newTime
-        })
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        // Update the appointment in the local state
-        setAppointments(prev => prev.map(app => {
-          if ((app.id === selectedAppointment.id) || (app._id === selectedAppointment._id)) {
-            return {
-              ...app,
-              appointment_date: formattedDate,
-              appointment_time: newTime
-            };
-          }
-          return app;
-        }));
-
-        alert("Appointment rescheduled successfully.");
-        setRescheduleDialogOpen(false);
-      } else {
-        alert(`Failed to reschedule appointment: ${data.message || "Unknown error"}`);
-      }
-    } catch (err) {
-      console.error("Error rescheduling appointment:", err);
-      alert("Error rescheduling appointment. Please try again.");
-    } finally {
-      setIsRescheduling(false);
-    }
-  };
-
-  // IMPORTANT: Fix date comparison to handle ISO strings properly
-  const currentDate = new Date();
-
-  const upcomingAppointments = appointments.filter(app => {
-    const appDate = new Date(app.appointment_date);
-    return appDate >= currentDate;
-  });
-
-  const pastAppointments = appointments.filter(app => {
-    const appDate = new Date(app.appointment_date);
-    return appDate < currentDate;
-  });
-
-  // Simplified function that doesn't depend on finding doctors
-  const processAppointments = (appointmentsList) => {
-    return appointmentsList.map(app => {
-      // Try to find the doctor if available
-      const doctor = doctors && doctors.length > 0
-        ? doctors.find(doc => String(doc._id) === String(app.doctor_id))
-        : null;
-
-      // Create appointment data with or without doctor info
-      return {
-        // Doctor info if available, otherwise fallback values
-        name: doctor ? doctor.name : `Doctor #${app.doctor_id}`,
-        speciality: doctor ? doctor.speciality : "Information unavailable",
-        address: doctor ? doctor.address : "Address unavailable",
-        image: doctor ? doctor.image : "/placeholder.svg",
-
-        // Appointment info
-        date: new Date(app.appointment_date).toLocaleDateString('en-GB', {
-          day: '2-digit', month: 'long', year: 'numeric'
-        }),
-        time: app.appointment_time,
-        status: app.status,
-        appointmentId: app.id || app._id,
-        doctor_id: app.doctor_id,
-
-        // Keep the original appointment data for rescheduling
-        ...app
-      };
-    });
-  };
-
-  const dataToShow = activeTab === 'MyAppointments'
-    ? processAppointments(upcomingAppointments)
-    : processAppointments(pastAppointments);
+  }, [token])
 
   return (
-    <div className="px-4">
-      {/* Tabs */}
-      <div className='flex gap-6 mt-12 border-b'>
+    <div>
+      <p className="pb-3 mt-12 text-lg font-medium text-gray-600 border-b">My appointments</p>
+
+      {/* Tab Navigation */}
+      <div className="flex border-b mb-4">
         <button
-          onClick={() => setActiveTab('MyAppointments')}
-          className={`pb-3 font-medium text-zinc-700 ${activeTab === 'MyAppointments' ? 'border-b-2 border-primary' : ''}`}>
-          My Appointments
+          className={`py-2 px-4 font-medium ${activeTab === "upcoming" ? "border-b-2 border-primary text-primary" : "text-gray-500"}`}
+          onClick={() => setActiveTab("upcoming")}
+        >
+          Upcoming
         </button>
         <button
-          onClick={() => setActiveTab('PastHistory')}
-          className={`pb-3 font-medium text-zinc-700 ${activeTab === 'PastHistory' ? 'border-b-2 border-primary' : ''}`}>
-          Past History
+          className={`py-2 px-4 font-medium ${activeTab === "past" ? "border-b-2 border-primary text-primary" : "text-gray-500"}`}
+          onClick={() => setActiveTab("past")}
+        >
+          Past
+        </button>
+        <button
+          className={`py-2 px-4 font-medium ${activeTab === "cancelled" ? "border-b-2 border-primary text-primary" : "text-gray-500"}`}
+          onClick={() => setActiveTab("cancelled")}
+        >
+          Cancelled
         </button>
       </div>
 
-      {/* Appointment Cards */}
-      <div>
-        {isLoading ? (
-          <p className="py-8 text-center">Loading appointments...</p>
-        ) : appointments.length === 0 ? (
-          <p className="py-8 text-center text-zinc-500">No appointments found.</p>
-        ) : dataToShow.length === 0 ? (
-          <p className="py-8 text-center text-zinc-500">
-            {activeTab === 'MyAppointments'
-              ? "No upcoming appointments."
-              : "No past appointments."}
-          </p>
+      <div className="">
+        {getFilteredAppointments().length === 0 ? (
+          <div className="text-center py-8 text-gray-500">No {activeTab} appointments found.</div>
         ) : (
-          dataToShow.map((item, index) => (
-            <div className='grid grid-cols-[1fr_2fr] gap-4 sm:flex sm:gap-6 py-4 border-b' key={index}>
+          getFilteredAppointments().map((item, index) => (
+            <div key={index} className="grid grid-cols-[1fr_2fr] gap-4 sm:flex sm:gap-6 py-4 border-b">
               <div>
-                <img className='w-32 h-32 object-cover rounded' src={item.image || "/placeholder.svg"} alt={item.name} />
+                <img className="w-36 bg-[#EAEFFF]" src={item.docData.image || "/placeholder.svg"} alt="" />
               </div>
-              <div className='flex-1 text-sm text-zinc-600'>
-                <p className='text-neutral-800 font-semibold'>{item.name}</p>
-                <p>{item.speciality}</p><br />
-                <p className='text-zinc-700 font-medium mt-1'>Address</p>
-                <p className='text-xs'>{item.address}</p><br />
-                <p className='text-xs'>
-                  <span className='text-xs text-neutral-700 font-medium'>Date & Time: </span>
-                  {item.date} | {item.time}
-                </p>
-                <p className='text-xs mt-1'>
-                  <span className='text-xs text-neutral-700 font-medium'>Status: </span>
-                  {item.status}
+              <div className="flex-1 text-sm text-[#5E5E5E]">
+                <p className="text-[#262626] text-base font-semibold">{item.docData.name}</p>
+                <p>{item.docData.speciality}</p>
+                <p className="text-[#464646] font-medium mt-1">Address:</p>
+                <p className="">{item.docData.address.line1}</p>
+                <p className="">{item.docData.address.line2}</p>
+                <p className=" mt-1">
+                  <span className="text-sm text-[#3C3C3C] font-medium">Date & Time:</span>{" "}
+                  {slotDateFormat(item.slotDate)} | {item.slotTime}
                 </p>
               </div>
+              <div></div>
+              <div className="flex flex-col gap-2 justify-end text-sm text-center">
+                {/* Show reschedule button only for upcoming appointments */}
+                {activeTab === "upcoming" && !item.cancelled && !item.isCompleted && (
+                  <>
+                    <button
+                      onClick={() => toggleReschedule(item._id)}
+                      className="text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-primary hover:text-white transition-all duration-300"
+                    >
+                      {rescheduleId === item._id ? "Cancel" : "Reschedule"}
+                    </button>
 
-              {activeTab === 'MyAppointments' && (
-                <div className='flex flex-col justify-end gap-2'>
+                    {rescheduleId === item._id && (
+                      <div className="mt-2 p-3 border rounded bg-gray-50">
+                        <div className="mb-2">
+                          <label className="block text-sm font-medium mb-1">New Date:</label>
+                          <input
+                            type="date"
+                            value={newDate}
+                            onChange={(e) => setNewDate(e.target.value)}
+                            min={new Date().toISOString().split("T")[0]}
+                            className="w-full p-2 border rounded"
+                          />
+                        </div>
+                        <div className="mb-2">
+                          <label className="block text-sm font-medium mb-1">New Time:</label>
+                          <select
+                            value={newTime}
+                            onChange={(e) => setNewTime(e.target.value)}
+                            className="w-full p-2 border rounded"
+                          >
+                            <option value="">Select time</option>
+                            {availableTimeSlots.map((time) => (
+                              <option key={time} value={time}>
+                                {time}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <button
+                          onClick={() => rescheduleAppointment(item._id)}
+                          className="w-full py-2 bg-primary text-white rounded hover:bg-primary/90 transition-all duration-300"
+                        >
+                          Confirm Reschedule
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Payment status */}
+                {!item.cancelled && item.payment && !item.isCompleted && (
+                  <button className="sm:min-w-48 py-2 border rounded text-[#696969] bg-[#EAEFFF]">Paid</button>
+                )}
+
+                {/* Completed status */}
+                {item.isCompleted && (
+                  <button className="sm:min-w-48 py-2 border border-green-500 rounded text-green-500">Completed</button>
+                )}
+
+                {/* Cancel button - only show for upcoming appointments */}
+                {activeTab === "upcoming" && !item.cancelled && !item.isCompleted && (
                   <button
-                    onClick={() => openRescheduleDialog(item)}
-                    className='text-sm text-primary text-center sm:min-w-48 py-2 border border-primary rounded hover:bg-primary hover:text-white transition-all duration-300'>
-                    Reschedule
+                    onClick={() => cancelAppointment(item._id)}
+                    className="text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-red-600 hover:text-white transition-all duration-300"
+                  >
+                    Cancel appointment
                   </button>
-                  <button
-                    onClick={() => handleCancel(item.appointmentId)}
-                    className='text-sm text-red-600 text-center sm:min-w-48 py-2 border border-red-600 rounded hover:bg-red-600 hover:text-white transition-all duration-300'>
-                    Cancel Appointment
+                )}
+
+                {/* Cancelled status */}
+                {item.cancelled && (
+                  <button className="sm:min-w-48 py-2 border border-red-500 rounded text-red-500">
+                    Appointment cancelled
                   </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           ))
         )}
       </div>
-
-      {/* Reschedule Dialog */}
-      <Dialog open={rescheduleDialogOpen} onOpenChange={setRescheduleDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Reschedule Appointment</DialogTitle>
-            <DialogDescription>
-              Select a new date and time for your appointment.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <label className="text-sm font-medium flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                Select Date
-              </label>
-              <CalendarComponent
-                mode="single"
-                selected={newDate}
-                onSelect={setNewDate}
-                disabled={(date) => date < new Date() || date > new Date(new Date().setMonth(new Date().getMonth() + 3))}
-                className="rounded-md border"
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <label className="text-sm font-medium flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                Select Time
-              </label>
-              <Select value={newTime} onValueChange={setNewTime}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select time" />
-                </SelectTrigger>
-                <SelectContent>
-                  {timeSlots.map((time) => (
-                    <SelectItem key={time} value={time}>
-                      {time}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setRescheduleDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleReschedule}
-              disabled={isRescheduling || !newDate || !newTime}
-              className="bg-primary text-white hover:bg-primary/90"
-            >
-              {isRescheduling ? "Rescheduling..." : "Confirm Reschedule"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
-  );
-};
+  )
+}
 
-export default MyAppointments;
+export default MyAppointments
