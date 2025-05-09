@@ -1,5 +1,5 @@
 import logo from './logo.png'
-import profile_pic from './profile_pic.jpeg'
+import profile_pic from './profile_pic.jpg'
 import dropdown_icon from './dropdown_icon.png'
 import group_profiles from './group_profiles.png'
 import arrow_icon from './arrow_icon.png'
@@ -73,7 +73,7 @@ export const specialityData = [
 
 export const doctors = [
   {
-    _id: 'doc1',
+    _id: '1',
     name: 'Dr. Sita Sharma',
     image: doc1,
     speciality: 'Gynocologist',
@@ -84,7 +84,7 @@ export const doctors = [
 
   },
   {
-    _id: 'doc2',
+    _id: '2',
     name: 'Dr.Ram Prasad',
     image: doc2,
     speciality: 'General physician',
@@ -94,7 +94,7 @@ export const doctors = [
     address: 'Naxal, Kathmandu'
   },
   {
-    _id: 'doc3',
+    _id: '3',
     name: 'Dr. Rajesh Adhikari',
     image: doc3,
     speciality: 'Cardiologist',
@@ -104,7 +104,7 @@ export const doctors = [
     address: 'Naxal, Kathmandu'
   },
   {
-    _id: 'doc4',
+    _id: '4',
     name: 'Dr. Anju KC',
     image: doc4,
     speciality: 'Dermatologist',
@@ -114,7 +114,7 @@ export const doctors = [
     address: 'Naxal, Kathmandu'
   },
   {
-    _id: 'doc5',
+    _id: '5',
     name: 'Dr. Bijay Gautam',
     image: doc5,
     speciality: 'Psychiatrist',
@@ -124,7 +124,7 @@ export const doctors = [
     address: 'Naxal, Kathmandu'
   },
   {
-    _id: 'doc6',
+    _id: '6',
     name: 'Dr. Prakash Thapa',
     image: doc6,
     speciality: 'Gynecologist',
@@ -134,7 +134,7 @@ export const doctors = [
     address: 'Naxal, Kathmandu'
   },
   {
-    _id: 'doc7',
+    _id: '7',
     name: 'Dr. Suraj Maharjan',
     image: doc7,
     speciality: 'Dentist',
@@ -144,7 +144,7 @@ export const doctors = [
     address: 'Naxal, Kathmandu'
   },
   {
-    _id: 'doc8',
+    _id: '8',
     name: 'Dr. Nisha Joshi',
     image: doc8,
     speciality: 'Dentist',
@@ -154,7 +154,7 @@ export const doctors = [
     address: 'Naxal, Kathmandu'
   },
   {
-    _id: 'doc9',
+    _id: '9',
     name: 'Dr. Meera Rana',
     image: doc9,
     speciality: 'Neurologist',
@@ -164,7 +164,7 @@ export const doctors = [
     address: 'Naxal, Kathmandu'
   },
   {
-    _id: 'doc10',
+    _id: '10',
     name: 'Dr. Rina Lama',
     image: doc10,
     speciality: 'Cardiologist',
@@ -174,7 +174,7 @@ export const doctors = [
     address: 'Naxal, Kathmandu'
   },
   {
-    _id: 'doc11',
+    _id: '11',
     name: 'Dr. Deepak Acharya',
     image: doc11,
     speciality: 'Neurologist',
@@ -186,7 +186,7 @@ export const doctors = [
   },
 
   {
-    _id: 'doc12',
+    _id: '12',
     name: 'Dr. Daya Khadka',
     image: doc12,
     speciality: 'General physician',

@@ -12,6 +12,13 @@ import appointments_icon from './appointments_icon.svg'
 import earning_icon from './earning_icon.svg'
 import patients_icon from './patients_icon.svg'
 
+import doc1 from './doc1.jpeg'
+import doc2 from './doc2.jpeg'
+import doc3 from './doc3.jpeg'
+import doc4 from './doc4.jpeg'
+import doc5 from './doc5.jpeg'
+import doc6 from './doc6.jpeg'
+
 export const assets = {
   add_icon,
   admin_logo,
@@ -27,3 +34,67 @@ export const assets = {
   appointments_icon,
   earning_icon
 }
+
+export const doctors = [
+  {
+    _id: '1',
+    name: 'Dr. Sita Sharma',
+    image: doc1,
+    speciality: 'Gynocologist',
+    experience: '5 years',
+    about: 'Focused on women’s reproductive health.',
+    fees: 500,
+    address: 'Naxal,Kathmandu'
+
+  },
+  {
+    _id: '2',
+    name: 'Dr.Ram Prasad',
+    image: doc2,
+    speciality: 'General physician',
+    experience: '7 years',
+    about: 'He has a strong commitment to delevery comprehensive medical care.',
+    fees: 600,
+    address: 'Naxal, Kathmandu'
+  },
+  {
+    _id: '3',
+    name: 'Dr. Rajesh Adhikari',
+    image: doc3,
+    speciality: 'Cardiologist',
+    experience: '10 years',
+    about: 'He is xpert in heart-related diagnosis and treatment.',
+    fees: 1000,
+    address: 'Naxal, Kathmandu'
+  },
+  {
+    _id: '4',
+    name: 'Dr. Anju KC',
+    image: doc4,
+    speciality: 'Dermatologist',
+    experience: '6 years',
+    about: 'She is experienced in skin treatment and cosmetic procedures.',
+    fees: 700,
+    address: 'Naxal, Kathmandu'
+  },
+  {
+    _id: '5',
+    name: 'Dr. Bijay Gautam',
+    image: doc5,
+    speciality: 'Psychiatrist',
+    experience: '9 years',
+    about: 'He helps patients with mental health and counseling.',
+    fees: 850,
+    address: 'Naxal, Kathmandu'
+  },
+  {
+    _id: '6',
+    name: 'Dr. Prakash Thapa',
+    image: doc6,
+    speciality: 'Gynecologist',
+    experience: '8 years',
+    about: 'Focused on women’s reproductive health.',
+    fees: 750,
+    address: 'Naxal, Kathmandu'
+  }
+]

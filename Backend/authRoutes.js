@@ -74,7 +74,7 @@ router.post('/login', (req, res) => {
     }
 
     // Optional: return user info along with token
-    const token = jwt.sign({ id: user.id, email: user.email }, SECRET_KEY, { expiresIn: '1h' });
+    const token = jwt.sign({ id: user.id, email: user.email }, SECRET_KEY, { expiresIn: '365d' });
 
     res.json({
       success: true,

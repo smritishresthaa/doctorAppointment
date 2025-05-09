@@ -77,7 +77,7 @@ const Navbar = () => {
                 <div className='absolute top-0 right-0 mt-2 w-48 pt-14 text-base font-medium text-gray-600 hidden group-hover:block z-10'>
                   <div className='min-w-48 bg-stone-100 rounded flex flex-col gap-4 p-4'>
                     <p onClick={() => navigate('/my-profile')} className='hover:text-black cursor-pointer'>My Profile</p>
-                    <p onClick={() => navigate('/my-appointment')} className='hover:text-black cursor-pointer'>My Appointments</p>
+                    <p onClick={() => navigate('/my-appointments')} className='hover:text-black cursor-pointer'>My Appointments</p>
                     <p onClick={handleLogout} className='hover:text-black cursor-pointer'>Logout</p>
                   </div>
                 </div>
